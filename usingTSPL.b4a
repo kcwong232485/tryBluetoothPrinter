@@ -1,0 +1,147 @@
+﻿Build1=Default,b4a.example
+File1=umbellar.bmp
+File2=umbellar.jpg
+File3=umbellar2.bmp
+File4=umbellar3.bmp
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=core
+Library2=serial
+Library3=randomaccessfile
+Library4=byteconverter
+Library5=bitmapcreator
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=clsTsplPrinter
+Module2=Starter
+NumberOfFiles=4
+NumberOfLibraries=5
+NumberOfModules=2
+Version=11.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A TSPL Printer
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim Printer2 As  clsTsplPrinter
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim but1 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	but1.Initialize("but1")
+	but1.Text="Print"
+	but1.TextColor=Colors.Blue
+	but1.TextSize=15	
+	Activity.AddView(but1,10dip,10dip,100dip,45dip)
+
+	Activity.AddMenuItem("Connect", "mnuConnect")
+	Activity.AddMenuItem("Disconnect", "mnuDisconnect")
+	DateTime.DateFormat="yyyy-MM-dd"
+	If FirstTime Then
+		Printer2.Initialize(Me, "Printer2")
+		DisableButtons
+	End If
+	
+End Sub
+
+Sub Activity_Resume
+	If Printer2.IsBluetoothOn = False Then
+		MsgboxAsync("Please enable Bluetooth and connect a Bluetooth printer.", "")
+		'Else If Printer1.IsConnected = False Then
+	Else If Printer2.IsConnected = False Then
+		Printer2.Connect
+	End If
+
+End Sub
+
+Sub DisableButtons
+	#if release
+	but1.Enabled = False
+	#end if
+End Sub
+
+Sub EnableButtons
+	but1.Enabled = True
+End Sub
+
+Sub mnuConnect_Click
+	If Printer2.IsInitialized Then	Printer2.Connect
+End Sub
+
+Sub Printer2_Connected (Success As Boolean)
+	If Success Then
+		ToastMessageShow("Connected successfully", False)
+		EnableButtons
+	Else
+		MsgboxAsync(Printer2.ConnectedErrorMsg, "Error connecting.")
+	End If
+End Sub
+
+Sub mnuDisconnect_Click
+	Printer2.Disconnect
+End Sub
+
+Private Sub Printer2_NewData (Buffer() As Byte)
+End Sub
+Private Sub Printer2_Error
+	'ToastMessageShow(LastException.Message, True)
+	DisableButtons
+End Sub
+Private Sub Printer2_Terminated
+	ToastMessageShow("Connection is terminated.", True)
+	DisableButtons
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub but1_Click
+	' Printer2.Size(50,40)
+	Printer2.Size(40, 30)
+	Printer2.GAP(1.5,0)
+	Printer2.DENSITY2(7)
+	Printer2.DIRECTION(1)
+	Printer2.REFERENCE(0,0)
+	'Printer2.HOME
+	'Printer2.BACKUP(320)
+	Printer2.CLS
+
+	Dim a As String
+	a="Test" & DateTime.Date(DateTime.Now) & " " &  DateTime.Time(DateTime.Now)
+	
+	Printer2.TEXT(20,10,"TSS24.BF2",0,1,1,a)
+	Printer2.BARCODE(20,60,"128",70,False,0,2,4,"9787213050145")
+	Printer2.QRCODE(20,150,"L",3,"A",0,a)
+	
+	'only print bmp
+	Printer2.PUTBMP(100,140,File.DirAssets,"umbellar2.bmp")
+	Printer2.BITMAP(200,140,0,LoadBitmap(File.DirAssets,"umbellar.jpg"))
+	
+	Printer2.PRINT(1,0)
+	Printer2.EOP
+	
+End Sub
